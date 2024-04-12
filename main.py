@@ -4,8 +4,6 @@ from PIL import Image, ImageTk
 from CTkListbox import *
 from CTkMessagebox import CTkMessagebox
 import cv2
-from _socket import herror
-
 
 class Main:
     def __init__(self):
@@ -26,11 +24,6 @@ class Main:
         self.img_edit = None
         self.photo_edit = None
 
-        self.processing_options = [
-            "Conversão de cores",
-            "Filtros"
-        ]
-
         # Janela de espaço de cores
         self.color_conversion_window = None
 
@@ -46,6 +39,17 @@ class Main:
         }
 
         self.filter_window = None
+        self.filter_options = [
+            "Nenhum",
+            "Média",
+            "Gaussiano"
+        ]
+        self.kernel_size = None
+        self.label_kernel_size = None
+        self.processing_options = [
+            "Conversão de cores",
+            "Filtros"
+        ]
 
         # Canvas para as imagens
         self.canvas_original = ctk.CTkCanvas(
@@ -122,23 +126,28 @@ class Main:
     def btn_load_img_callback(self):
         filename = ctk.filedialog.askopenfilename()
         if filename:
-            self.img_original = Image.open(filename).convert("RGB")
-            self.img_edit = self.img_original
-            self.img_ratio = self.img_original.size[0] / self.img_original.size[1]
+            try:
+                self.img_original = Image.open(filename).convert("RGB")
+                self.img_edit = self.img_original
+                self.img_ratio = self.img_original.size[0] / self.img_original.size[1]
 
-            photo_img = ImageTk.PhotoImage(self.img_original)
+                photo_img = ImageTk.PhotoImage(self.img_original)
 
-            width, height = self.canvas_original.winfo_width(), self.canvas_original.winfo_height()
+                width, height = self.canvas_original.winfo_width(), self.canvas_original.winfo_height()
 
-            self.canvas_original.create_image(
-                int(width / 2), int(height / 2), anchor='center', image=photo_img
-            )
-            self.photo_img = photo_img
+                self.canvas_original.create_image(
+                    int(width / 2), int(height / 2), anchor='center', image=photo_img
+                )
+                self.photo_img = photo_img
 
-            self.canvas_edited.create_image(
-                int(width / 2), int(height / 2), anchor='center', image=photo_img
-            )
-            self.photo_edit = photo_img
+                self.canvas_edited.create_image(
+                    int(width / 2), int(height / 2), anchor='center', image=photo_img
+                )
+                self.photo_edit = photo_img
+            except:
+                CTkMessagebox(
+                    title="Erro", message="Erro ao abrir imagem!", icon="cancel"
+                )
 
     def btn_save_img_callback(self):
         if self.img_edit is not None:
@@ -151,7 +160,7 @@ class Main:
                     CTkMessagebox(
                         title="Sucesso", message="Imagem salva com sucesso!", icon="check"
                     )
-                except Exception as e:
+                except:
                     CTkMessagebox(
                         title="Erro", message="Erro ao salvar imagem!", icon="cancel"
                     )
@@ -169,13 +178,13 @@ class Main:
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
             self.color_conversion_window = ctk.CTkToplevel(self.app)
-            self.color_conversion_window.geometry("200x720")
+            self.color_conversion_window.geometry("300x720")
             self.color_conversion_window.title("Espaço de cores")
 
             color_space_var = ctk.StringVar(self.color_conversion_window)
             color_space_var.set("RGB")
 
-            ctk.CTkLabel(self.color_conversion_window, text="Escolha um espaço de cor").pack()
+            ctk.CTkLabel(self.color_conversion_window, text="Escolha um espaço de cor", font=("Roboto", -18)).pack()
 
             for index, opt in enumerate(self.color_space_options.keys()):
                 if index == 0:
@@ -192,12 +201,6 @@ class Main:
                 self.color_conversion_window, text="Confirmar", command=lambda: self.color_conversion(color_space_var.get())
             ).pack()
 
-    def open_filter_window(self):
-        if self.filter_window is None or not self.filter_window.winfo_exists():
-            self.filter_window = ctk.CTkToplevel(self.app)
-            self.filter_window.geometry("400x720")
-            self.filter_window.title("Filtros")
-
     def color_conversion(self, selected_color):
         if selected_color == 'RGB':
             self.photo_edit = self.photo_img
@@ -206,6 +209,68 @@ class Main:
             cvt_img = cv2.cvtColor(cv_img, self.color_space_options[selected_color])
             self.img_edit = Image.fromarray(cvt_img)
             self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
+
+        self.canvas_edited.create_image(
+            int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
+        )
+
+    def open_filter_window(self):
+        if not (self.filter_window is None or not self.filter_window.winfo_exists()):
+            return
+        self.filter_window = ctk.CTkToplevel(self.app)
+        self.filter_window.geometry("400x720")
+        self.filter_window.title("Filtros")
+
+        min = 1
+        max = 15
+        steps = int((max - min) / 2)
+
+        ctk.CTkLabel(self.filter_window, text="Tamanho do Kernel", font=("Roboto", -18)).pack()
+
+        self.label_kernel_size = ctk.CTkLabel(self.filter_window, text="1")
+        self.label_kernel_size.pack()
+
+        slider = ctk.CTkSlider(
+            self.filter_window, from_=min, to=max, number_of_steps=steps, command=self.handle_kernel_slider
+        )
+        slider.pack()
+        slider.set(1)
+
+        filter_var = ctk.StringVar(self.filter_window)
+        filter_var.set("Nenhum")
+
+        for index, filter in enumerate(self.filter_options):
+            if index == 0:
+                pady = (20, 10)
+            elif index == len(self.color_space_options) - 1:
+                pady = (10, 20)
+            else:
+                pady = (10, 10)
+            ctk.CTkRadioButton(
+                self.filter_window, text=filter, variable=filter_var, value=filter
+            ).pack(pady=pady)
+
+        ctk.CTkButton(
+            self.filter_window, text="Confirmar", command=lambda: self.apply_filter(filter_var.get())
+        ).pack()
+
+    def handle_kernel_slider(self, value):
+        self.label_kernel_size.configure(text=f"{int(value)}")
+        self.kernel_size = (int(value), int(value))
+
+    def apply_filter(self, filter_name):
+        cv_img = np.array(self.img_original)
+        if filter_name == self.filter_options[0]:
+            filtered_img = cv_img
+        elif filter_name == self.filter_options[1]:
+            filtered_img = cv2.blur(cv_img, self.kernel_size)
+        else:
+            filtered_img = cv2.GaussianBlur(cv_img, self.kernel_size, 0)
+
+        self.img_edit = Image.fromarray(filtered_img)
+        self.photo_edit = ImageTk.PhotoImage(self.img_edit)
 
         width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
 
