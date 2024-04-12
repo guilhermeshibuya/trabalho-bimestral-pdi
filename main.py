@@ -18,9 +18,6 @@ class Main:
         self.app.grid_rowconfigure(0, weight=2)
         self.app.grid_rowconfigure(1, weight=1)
 
-        # Janela de espaço de cores
-        self.color_conversion_window = None
-
         self.img_original = None
         self.photo_img = None
 
@@ -31,8 +28,11 @@ class Main:
 
         self.processing_options = [
             "Conversão de cores",
-            "Média"
+            "Filtros"
         ]
+
+        # Janela de espaço de cores
+        self.color_conversion_window = None
 
         # Opções de espaço de cores
         self.color_space_options = {
@@ -44,6 +44,8 @@ class Main:
             'Lab': cv2.COLOR_RGB2Lab,
             'YCrCb': cv2.COLOR_RGB2YCrCb
         }
+
+        self.filter_window = None
 
         # Canvas para as imagens
         self.canvas_original = ctk.CTkCanvas(
@@ -161,8 +163,8 @@ class Main:
         if self.img_original is not None:
             if selected_method == "Conversão de cores":
                 self.open_color_conversion()
-            elif selected_method == "Média":
-                print("blur")
+            elif selected_method == "Filtros":
+                self.open_filter_window()
 
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
@@ -191,7 +193,10 @@ class Main:
             ).pack()
 
     def open_filter_window(self):
-        print("")
+        if self.filter_window is None or not self.filter_window.winfo_exists():
+            self.filter_window = ctk.CTkToplevel(self.app)
+            self.filter_window.geometry("400x720")
+            self.filter_window.title("Filtros")
 
     def color_conversion(self, selected_color):
         if selected_color == 'RGB':
