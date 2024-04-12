@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import numpy as np
 from PIL import Image, ImageTk
 from CTkListbox import *
 from CTkMessagebox import CTkMessagebox
@@ -12,10 +13,13 @@ class Main:
         self.app.geometry("1200x720")
         self.app.title("PDI")
 
-        # Configuração do grid geral da janela
+        # Configuração do grid geral da janela principal
         self.app.grid_columnconfigure((0, 1), weight=1)
         self.app.grid_rowconfigure(0, weight=2)
         self.app.grid_rowconfigure(1, weight=1)
+
+        # Janela de espaço de cores
+        self.color_conversion_window = None
 
         self.img_original = None
         self.photo_img = None
@@ -27,8 +31,19 @@ class Main:
 
         self.processing_options = [
             "Conversão de cores",
-            "Outros"
+            "Média"
         ]
+
+        # Opções de espaço de cores
+        self.color_space_options = {
+            'RGB': '',
+            'Gray': cv2.COLOR_RGB2GRAY,
+            'HSV': cv2.COLOR_RGB2HSV,
+            'XYZ': cv2.COLOR_RGB2XYZ,
+            'Luv': cv2.COLOR_RGB2Luv,
+            'Lab': cv2.COLOR_RGB2Lab,
+            'YCrCb': cv2.COLOR_RGB2YCrCb
+        }
 
         # Canvas para as imagens
         self.canvas_original = ctk.CTkCanvas(
@@ -69,12 +84,15 @@ class Main:
         # Listbox
         self.listbox = CTkListbox(self.frame_options)
         self.listbox.grid(row=0, column=1,  sticky="nsew", padx=5, pady=5)
+        self.listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
 
         for option in self.processing_options:
             self.listbox.insert("end", option)
 
+        # Setando aparência e tema do aplicativo
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
+
         self.app.update()
 
     def fill_img(self, event):
@@ -102,7 +120,7 @@ class Main:
     def btn_load_img_callback(self):
         filename = ctk.filedialog.askopenfilename()
         if filename:
-            self.img_original = Image.open(filename)
+            self.img_original = Image.open(filename).convert("RGB")
             self.img_edit = self.img_original
             self.img_ratio = self.img_original.size[0] / self.img_original.size[1]
 
@@ -135,6 +153,60 @@ class Main:
                     CTkMessagebox(
                         title="Erro", message="Erro ao salvar imagem!", icon="cancel"
                     )
+
+    def on_listbox_select(self, event):
+        selected_index = self.listbox.curselection()
+        selected_method = self.processing_options[selected_index]
+
+        if self.img_original is not None:
+            if selected_method == "Conversão de cores":
+                self.open_color_conversion()
+            elif selected_method == "Média":
+                print("blur")
+
+    def open_color_conversion(self):
+        if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
+            self.color_conversion_window = ctk.CTkToplevel(self.app)
+            self.color_conversion_window.geometry("200x720")
+            self.color_conversion_window.title("Espaço de cores")
+
+            color_space_var = ctk.StringVar(self.color_conversion_window)
+            color_space_var.set("RGB")
+
+            ctk.CTkLabel(self.color_conversion_window, text="Escolha um espaço de cor").pack()
+
+            for index, opt in enumerate(self.color_space_options.keys()):
+                if index == 0:
+                    pady = (20, 10)
+                elif index == len(self.color_space_options) - 1:
+                    pady = (10, 20)
+                else:
+                    pady = (10, 10)
+                ctk.CTkRadioButton(
+                    self.color_conversion_window, text=opt, variable=color_space_var, value=opt
+                ).pack(pady=pady)
+
+            ctk.CTkButton(
+                self.color_conversion_window, text="Confirmar", command=lambda: self.color_conversion(color_space_var.get())
+            ).pack()
+
+    def open_filter_window(self):
+        print("")
+
+    def color_conversion(self, selected_color):
+        if selected_color == 'RGB':
+            self.photo_edit = self.photo_img
+        else:
+            cv_img = np.array(self.img_original)
+            cvt_img = cv2.cvtColor(cv_img, self.color_space_options[selected_color])
+            self.img_edit = Image.fromarray(cvt_img)
+            self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
+
+        self.canvas_edited.create_image(
+            int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
+        )
 
     def start_app(self):
         self.app.mainloop()
