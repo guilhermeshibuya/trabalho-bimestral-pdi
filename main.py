@@ -61,9 +61,14 @@ class Main:
         self.label_sigma_space = None
         self.slider_sigma_space = None
 
+        self.sobel_window = None
+        self.sobel_ksize = None
+        self.label_sobel_ksize = None
+
         self.processing_options = [
             "Conversão de cores",
-            "Filtros"
+            "Filtros",
+            "Sobel"
         ]
 
         # Canvas para as imagens
@@ -189,6 +194,8 @@ class Main:
                 self.open_color_conversion()
             elif selected_method == "Filtros":
                 self.open_filter_window()
+            elif selected_method == "Sobel":
+                self.open_sobel_window()
 
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
@@ -304,22 +311,6 @@ class Main:
             self.filter_window, text="Confirmar", command=lambda: self.apply_filter(filter_var.get())
         ).pack()
 
-    def handle_kernel_slider(self, value):
-        self.label_kernel_size.configure(text=f"{int(value)}")
-        self.kernel_size = (int(value), int(value))
-
-    def handle_d_size_slider(self, value):
-        self.label_d_size.configure(text=f'{int(value)}')
-        self.d_size = int(value)
-
-    def handle_sigma_color_slider(self, value):
-        self.label_sigma_color.configure(text=f'{value}')
-        self.sigma_color = value
-
-    def handle_sigma_space_slider(self, value):
-        self.label_sigma_space.configure(text=f'{value}')
-        self.sigma_space = value
-
     def apply_filter(self, filter_name):
         cv_img = np.array(self.img_edit)
         if filter_name == self.filter_options[0]:
@@ -354,6 +345,81 @@ class Main:
         self.canvas_edited.create_image(
             int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
         )
+
+    def open_sobel_window(self):
+        if not (self.sobel_window is None or not self.sobel_window.winfo_exists()):
+            return
+        self.sobel_window = ctk.CTkToplevel(self.app)
+        self.sobel_window.geometry("300x720")
+        self.sobel_window.title("Sobel")
+
+        k_min = 1
+        k_max = 15
+        steps = int((k_max - k_min) / 2)
+
+        ctk.CTkLabel(self.sobel_window, text="Tamanho do Kernel", font=("Roboto", -18)).pack()
+
+        self.label_sobel_ksize = ctk.CTkLabel(self.sobel_window, text="1")
+        self.label_sobel_ksize.pack()
+
+        self.slider_kernel_size = ctk.CTkSlider(
+            self.sobel_window, from_=k_min, to=k_max, number_of_steps=steps, command=self.handle_sobel_ksize_slider
+        )
+        self.slider_kernel_size.pack()
+        self.slider_kernel_size.set(1)
+
+        ctk.CTkLabel(self.sobel_window, text="Direção", font=("Roboto", -18)).pack()
+
+        direction_var = ctk.StringVar(self.sobel_window)
+        direction_var.set("x")
+
+        ctk.CTkRadioButton(
+            self.sobel_window, text="x", variable=direction_var, value="x"
+        ).pack()
+        ctk.CTkRadioButton(
+            self.sobel_window, text="y", variable=direction_var, value="y"
+        ).pack()
+
+        ctk.CTkButton(
+            self.sobel_window, text="Confirmar", command=lambda: self.apply_sobel(direction_var.get())
+        ).pack()
+
+    def apply_sobel(self, direction):
+        cv_img = np.array(self.img_edit)
+
+        if direction == "x":
+            edit_img = cv2.Sobel(cv_img, cv2.CV_64F, 1, 0, self.sobel_ksize)
+        else:
+            edit_img = cv2.Sobel(cv_img, cv2.CV_64F, 0, 1, self.sobel_ksize)
+
+        self.img_edit = Image.fromarray(edit_img)
+        self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
+
+        self.canvas_edited.create_image(
+            int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
+        )
+
+    def handle_kernel_slider(self, value):
+        self.label_kernel_size.configure(text=f"{int(value)}")
+        self.kernel_size = (int(value), int(value))
+
+    def handle_d_size_slider(self, value):
+        self.label_d_size.configure(text=f'{int(value)}')
+        self.d_size = int(value)
+
+    def handle_sigma_color_slider(self, value):
+        self.label_sigma_color.configure(text=f'{value}')
+        self.sigma_color = value
+
+    def handle_sigma_space_slider(self, value):
+        self.label_sigma_space.configure(text=f'{value}')
+        self.sigma_space = value
+
+    def handle_sobel_ksize_slider(self, value):
+        self.label_sobel_ksize.configure(text=f'{int(value)}')
+        self.sobel_ksize = int(value)
 
     def start_app(self):
         self.app.mainloop()
