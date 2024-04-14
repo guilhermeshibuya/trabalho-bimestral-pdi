@@ -42,10 +42,25 @@ class Main:
         self.filter_options = [
             "Nenhum",
             "Média",
-            "Gaussiano"
+            "Gaussiano",
+            "Bilateral"
         ]
         self.kernel_size = None
         self.label_kernel_size = None
+        self.slider_kernel_size = None
+
+        self.d_size = None
+        self.label_d_size = None
+        self.slider_d_size = None
+
+        self.sigma_color = None
+        self.label_sigma_color = None
+        self.slider_sigma_color = None
+
+        self.sigma_space = None
+        self.label_sigma_space = None
+        self.slider_sigma_space = None
+
         self.processing_options = [
             "Conversão de cores",
             "Filtros"
@@ -152,7 +167,7 @@ class Main:
     def btn_save_img_callback(self):
         if self.img_edit is not None:
             img = self.img_edit
-            filename = ctk.filedialog.asksaveasfilename(defaultextension=".jpg",filetypes=[("JPEG files", "*.jpg")])
+            filename = ctk.filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG files", "*.jpg")])
 
             if filename:
                 try:
@@ -232,11 +247,44 @@ class Main:
         self.label_kernel_size = ctk.CTkLabel(self.filter_window, text="1")
         self.label_kernel_size.pack()
 
-        slider = ctk.CTkSlider(
+        self.slider_kernel_size = ctk.CTkSlider(
             self.filter_window, from_=min, to=max, number_of_steps=steps, command=self.handle_kernel_slider
         )
-        slider.pack()
-        slider.set(1)
+        self.slider_kernel_size.pack()
+        self.slider_kernel_size.set(1)
+
+        ctk.CTkLabel(self.filter_window, text="Diametro pixels (bilateral)",  font=("Roboto", -18)).pack()
+
+        self.label_d_size = ctk.CTkLabel(self.filter_window, text="0")
+        self.label_d_size.pack()
+
+        self.slider_d_size = ctk.CTkSlider(
+            self.filter_window, from_=0, to=30, command=self.handle_d_size_slider
+        )
+        self.slider_d_size.pack()
+        self.slider_d_size.set(0)
+
+        ctk.CTkLabel(self.filter_window, text="Sigma Color",  font=("Roboto", -18)).pack()
+
+        self.label_sigma_color = ctk.CTkLabel(self.filter_window, text="0")
+        self.label_sigma_color.pack()
+
+        self.slider_sigma_color = ctk.CTkSlider(
+            self.filter_window, from_=0, to=180, command=self.handle_sigma_color_slider
+        )
+        self.slider_sigma_color.pack()
+        self.slider_sigma_color.set(0)
+
+        ctk.CTkLabel(self.filter_window, text="Sigma Space", font=("Roboto", -18)).pack()
+
+        self.label_sigma_space = ctk.CTkLabel(self.filter_window, text="0")
+        self.label_sigma_space.pack()
+
+        self.slider_sigma_space = ctk.CTkSlider(
+            self.filter_window, from_=0, to=180, command=self.handle_sigma_space_slider
+        )
+        self.slider_sigma_space.pack()
+        self.slider_sigma_space.set(0)
 
         filter_var = ctk.StringVar(self.filter_window)
         filter_var.set("Nenhum")
@@ -260,14 +308,43 @@ class Main:
         self.label_kernel_size.configure(text=f"{int(value)}")
         self.kernel_size = (int(value), int(value))
 
+    def handle_d_size_slider(self, value):
+        self.label_d_size.configure(text=f'{int(value)}')
+        self.d_size = int(value)
+
+    def handle_sigma_color_slider(self, value):
+        self.label_sigma_color.configure(text=f'{value}')
+        self.sigma_color = value
+
+    def handle_sigma_space_slider(self, value):
+        self.label_sigma_space.configure(text=f'{value}')
+        self.sigma_space = value
+
     def apply_filter(self, filter_name):
         cv_img = np.array(self.img_original)
         if filter_name == self.filter_options[0]:
             filtered_img = cv_img
+            self.sigma_color = 0
+            self.slider_sigma_color.set(0)
+            self.label_sigma_color.configure(text=self.sigma_color)
+
+            self.sigma_space = 0
+            self.slider_sigma_space.set(0)
+            self.label_sigma_space.configure(text=self.sigma_space)
+
+            self.d_size = 0
+            self.slider_d_size.set(0)
+            self.label_d_size.configure(text=self.d_size)
+
+            self.kernel_size = (0, 0)
+            self.slider_kernel_size.set(0)
+            self.label_kernel_size.configure(text="0")
         elif filter_name == self.filter_options[1]:
             filtered_img = cv2.blur(cv_img, self.kernel_size)
-        else:
+        elif filter_name == self.filter_options[2]:
             filtered_img = cv2.GaussianBlur(cv_img, self.kernel_size, 0)
+        else:
+            filtered_img = cv2.bilateralFilter(cv_img, self.d_size, self.sigma_color, self.sigma_space)
 
         self.img_edit = Image.fromarray(filtered_img)
         self.photo_edit = ImageTk.PhotoImage(self.img_edit)
