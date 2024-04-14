@@ -217,10 +217,10 @@ class Main:
             ).pack()
 
     def color_conversion(self, selected_color):
+        cv_img = np.array(self.img_edit)
         if selected_color == 'RGB':
             self.photo_edit = self.photo_img
         else:
-            cv_img = np.array(self.img_original)
             cvt_img = cv2.cvtColor(cv_img, self.color_space_options[selected_color])
             self.img_edit = Image.fromarray(cvt_img)
             self.photo_edit = ImageTk.PhotoImage(self.img_edit)
@@ -238,9 +238,9 @@ class Main:
         self.filter_window.geometry("400x720")
         self.filter_window.title("Filtros")
 
-        min = 1
-        max = 15
-        steps = int((max - min) / 2)
+        k_min = 1
+        k_max = 15
+        steps = int((k_max - k_min) / 2)
 
         ctk.CTkLabel(self.filter_window, text="Tamanho do Kernel", font=("Roboto", -18)).pack()
 
@@ -248,7 +248,7 @@ class Main:
         self.label_kernel_size.pack()
 
         self.slider_kernel_size = ctk.CTkSlider(
-            self.filter_window, from_=min, to=max, number_of_steps=steps, command=self.handle_kernel_slider
+            self.filter_window, from_=k_min, to=k_max, number_of_steps=steps, command=self.handle_kernel_slider
         )
         self.slider_kernel_size.pack()
         self.slider_kernel_size.set(1)
@@ -270,7 +270,7 @@ class Main:
         self.label_sigma_color.pack()
 
         self.slider_sigma_color = ctk.CTkSlider(
-            self.filter_window, from_=0, to=180, command=self.handle_sigma_color_slider
+            self.filter_window, from_=0, to=200, command=self.handle_sigma_color_slider
         )
         self.slider_sigma_color.pack()
         self.slider_sigma_color.set(0)
@@ -281,7 +281,7 @@ class Main:
         self.label_sigma_space.pack()
 
         self.slider_sigma_space = ctk.CTkSlider(
-            self.filter_window, from_=0, to=180, command=self.handle_sigma_space_slider
+            self.filter_window, from_=0, to=200, command=self.handle_sigma_space_slider
         )
         self.slider_sigma_space.pack()
         self.slider_sigma_space.set(0)
@@ -321,9 +321,9 @@ class Main:
         self.sigma_space = value
 
     def apply_filter(self, filter_name):
-        cv_img = np.array(self.img_original)
+        cv_img = np.array(self.img_edit)
         if filter_name == self.filter_options[0]:
-            filtered_img = cv_img
+            filtered_img = np.array(self.img_original)
             self.sigma_color = 0
             self.slider_sigma_color.set(0)
             self.label_sigma_color.configure(text=self.sigma_color)
