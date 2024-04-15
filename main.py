@@ -101,6 +101,8 @@ class Main:
         self.frame_btns.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.frame_btns.grid_columnconfigure(0, weight=1)
 
+        
+
         self.btn_load_img = ctk.CTkButton(
             self.frame_btns, text="Carregar Imagem", command=self.btn_load_img_callback, font=("Roboto", -18)
         )
@@ -118,6 +120,10 @@ class Main:
 
         for option in self.processing_options:
             self.listbox.insert("end", option)
+
+        # Listbox histórico
+        self.history_listbox = CTkListbox(self.frame_options)
+        self.history_listbox.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
 
         # Setando aparência e tema do aplicativo
         ctk.set_appearance_mode("dark")
@@ -245,7 +251,11 @@ class Main:
         self.update_canvas()
 
         self.color_conversion_applied = True
-        self.history.append(self.img_edit.copy())
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': f'Espaço de cor - {selected_color}'
+        })
+        self.update_history_listbox()
 
     def open_filter_window(self):
         if not (self.filter_window is None or not self.filter_window.winfo_exists()):
@@ -349,11 +359,12 @@ class Main:
         self.img_edit = Image.fromarray(filtered_img)
         self.photo_edit = ImageTk.PhotoImage(self.img_edit)
 
-        width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
-
-        self.canvas_edited.create_image(
-            int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
-        )
+        self.update_canvas()
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': filter_name
+        })
+        self.update_history_listbox()
 
     def open_sobel_window(self):
         if not (self.sobel_window is None or not self.sobel_window.winfo_exists()):
@@ -404,11 +415,12 @@ class Main:
         self.img_edit = Image.fromarray(edit_img)
         self.photo_edit = ImageTk.PhotoImage(self.img_edit)
 
-        width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
-
-        self.canvas_edited.create_image(
-            int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
-        )
+        self.update_canvas()
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': 'Sobel'
+        })
+        self.update_history_listbox()
 
     def handle_kernel_slider(self, value):
         self.label_kernel_size.configure(text=f"{int(value)}")
@@ -436,6 +448,17 @@ class Main:
         self.canvas_edited.create_image(
             int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
         )
+
+    def update_history_listbox(self):
+        self.history_listbox.delete(0,"end")
+        for index, item in enumerate(self.history):
+            self.history_listbox.insert("end", f"{index + 1} - Processamento: {item['operation']}")
+
+    def undo_preprocessing(self):
+        if len(self.history) > 1:
+            self.history.pop()
+            self.img_edit = self.history[-1].copy()
+            self.update_canvas()
 
     def start_app(self):
         self.app.mainloop()
