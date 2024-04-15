@@ -8,12 +8,13 @@ import cv2
 class Main:
     def __init__(self):
         self.app = ctk.CTk()
-        self.app.geometry("1200x720")
+        self.app.geometry("1280x720")
         self.app.title("PDI")
 
         # Configuração do grid geral da janela principal
-        self.app.grid_columnconfigure((0, 1), weight=1)
-        self.app.grid_rowconfigure(0, weight=2)
+        self.app.grid_columnconfigure(0, weight=0)
+        self.app.grid_columnconfigure((1, 2), weight=5)
+        self.app.grid_rowconfigure(0, weight=3)
         self.app.grid_rowconfigure(1, weight=1)
 
         self.img_original = None
@@ -79,43 +80,50 @@ class Main:
         self.canvas_original = ctk.CTkCanvas(
             self.app, background='black', bd=0, highlightthickness=0, relief='flat'
         )
-        self.canvas_original.grid(row=0, column=0, stick='nsew', padx=(10, 5), pady=(10, 5))
+        self.canvas_original.grid(row=0, column=1, stick='nsew', padx=5, pady=(10, 5))
         self.canvas_original.bind('<Configure>', self.fill_img)
 
         self.canvas_edited = ctk.CTkCanvas(
             self.app, background='black', bd=0, highlightthickness=0, relief='flat'
         )
-        self.canvas_edited.grid(row=0, column=1, stick='nsew', padx=(10, 5), pady=(10, 5))
+        self.canvas_edited.grid(row=0, column=2, stick='nsew', padx=(5, 10), pady=(10, 5))
         self.canvas_edited.bind('<Configure>', self.fill_img)
 
-        # Container para as opções, botões
+        # Container para as opções
         self.frame_options = ctk.CTkFrame(self.app)
-        self.frame_options.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=(5, 10))
-        self.frame_options.grid_columnconfigure(0, weight=1)
-        self.frame_options.grid_columnconfigure(1, weight=5)
-        self.frame_options.grid_columnconfigure(2, weight=3)
+        self.frame_options.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=10, pady=(5, 10))
+        self.frame_options.grid_columnconfigure(0, weight=5)
+        self.frame_options.grid_columnconfigure(1, weight=3)
         self.frame_options.grid_rowconfigure(0, weight=1)
 
         # Botões
-        self.frame_btns = ctk.CTkFrame(self.frame_options)
-        self.frame_btns.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.frame_btns = ctk.CTkFrame(self.app)
+        self.frame_btns.grid(row=0, column=0, sticky="nsew", padx=(10, 5), pady=(10, 5), rowspan=2)
         self.frame_btns.grid_columnconfigure(0, weight=1)
 
-        
-
+        self.load_img_icon = ctk.CTkImage(
+            dark_image=Image.open('icons/file_open.png'),
+            size=(36, 36)
+        )
         self.btn_load_img = ctk.CTkButton(
-            self.frame_btns, text="Carregar Imagem", command=self.btn_load_img_callback, font=("Roboto", -18)
+            self.frame_btns, text="", image=self.load_img_icon,
+            command=self.btn_load_img_callback, width=40, height=40
         )
-        self.btn_load_img.grid(row=0, column=0, padx=20, pady=(10, 5), sticky="ew")
+        self.btn_load_img.grid(row=0, column=0, padx=10, pady=(10, 5))
 
-        self.btn_save_img = ctk.CTkButton(
-            self.frame_btns, text="Salvar Imagem", command=self.btn_save_img_callback, font=("Roboto", -18)
+        self.btn_save_img_icon = ctk.CTkImage(
+            dark_image=Image.open('icons/file_save.png'),
+            size=(36, 36)
         )
-        self.btn_save_img.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
+        self.btn_save_img = ctk.CTkButton(
+            self.frame_btns, text="", image=self.btn_save_img_icon,
+            command=self.btn_save_img_callback, width=40, height=40
+        )
+        self.btn_save_img.grid(row=1, column=0, padx=10, pady=5)
 
         # Listbox
         self.listbox = CTkListbox(self.frame_options)
-        self.listbox.grid(row=0, column=1,  sticky="nsew", padx=5, pady=5)
+        self.listbox.grid(row=0, column=0,  sticky="nsew", padx=5, pady=5)
         self.listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
 
         for option in self.processing_options:
@@ -123,7 +131,7 @@ class Main:
 
         # Listbox histórico
         self.history_listbox = CTkListbox(self.frame_options)
-        self.history_listbox.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
+        self.history_listbox.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
         # Setando aparência e tema do aplicativo
         ctk.set_appearance_mode("dark")
