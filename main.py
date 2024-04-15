@@ -26,6 +26,7 @@ class Main:
         self.photo_edit = None
 
         self.history = []
+        self.redo_history = []
 
         # Janela de espaço de cores
         self.color_conversion_window = None
@@ -121,6 +122,26 @@ class Main:
         )
         self.btn_save_img.grid(row=1, column=0, padx=10, pady=5)
 
+        self.btn_undo_icon = ctk.CTkImage(
+            dark_image=Image.open('icons/undo.png'),
+            size=(36, 36)
+        )
+        self.btn_undo = ctk.CTkButton(
+            self.frame_btns, text="", image=self.btn_undo_icon,
+            command=self.undo_preprocessing, width=40, height=40
+        )
+        self.btn_undo.grid(row=2, column=0, padx=10, pady=5)
+
+        self.btn_redo_icon = ctk.CTkImage(
+            dark_image=Image.open('icons/redo.png'),
+            size=(36, 36)
+        )
+        self.btn_redo = ctk.CTkButton(
+            self.frame_btns, text="", image=self.btn_redo_icon,
+            command=self.redo_preprocessing, width=40, height=40
+        )
+        self.btn_redo.grid(row=3, column=0, padx=10, pady=5)
+
         # Listbox
         self.listbox = CTkListbox(self.frame_options)
         self.listbox.grid(row=0, column=0,  sticky="nsew", padx=5, pady=5)
@@ -136,6 +157,8 @@ class Main:
         # Setando aparência e tema do aplicativo
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
+
+        self.operations_types = ["color conversion", "filter", "edge detection"]
 
         self.app.update()
 
@@ -182,6 +205,11 @@ class Main:
                     int(width / 2), int(height / 2), anchor='center', image=photo_img
                 )
                 self.photo_edit = photo_img
+                self.history.append({
+                    'image': self.img_edit.copy(),
+                    'operation': 'Imagem aberta'
+                })
+                self.update_history_listbox()
             except:
                 CTkMessagebox(
                     title="Erro", message="Erro ao abrir imagem!", icon="cancel"
@@ -261,8 +289,10 @@ class Main:
         self.color_conversion_applied = True
         self.history.append({
             'image': self.img_edit.copy(),
-            'operation': f'Espaço de cor - {selected_color}'
+            'operation': f'Espaço de cor - {selected_color}',
+            'type': self.operations_types[0]
         })
+        self.redo_history.clear()
         self.update_history_listbox()
 
     def open_filter_window(self):
@@ -370,8 +400,10 @@ class Main:
         self.update_canvas()
         self.history.append({
             'image': self.img_edit.copy(),
-            'operation': filter_name
+            'operation': filter_name,
+            'type': self.operations_types[1]
         })
+        self.redo_history.clear()
         self.update_history_listbox()
 
     def open_sobel_window(self):
@@ -426,8 +458,10 @@ class Main:
         self.update_canvas()
         self.history.append({
             'image': self.img_edit.copy(),
-            'operation': 'Sobel'
+            'operation': 'Sobel',
+            'type': self.operations_types[2]
         })
+        self.redo_history.clear()
         self.update_history_listbox()
 
     def handle_kernel_slider(self, value):
@@ -458,15 +492,29 @@ class Main:
         )
 
     def update_history_listbox(self):
-        self.history_listbox.delete(0,"end")
+        self.history_listbox.delete(0, "end")
         for index, item in enumerate(self.history):
             self.history_listbox.insert("end", f"{index + 1} - Processamento: {item['operation']}")
 
     def undo_preprocessing(self):
         if len(self.history) > 1:
-            self.history.pop()
-            self.img_edit = self.history[-1].copy()
+            last = self.history.pop()
+            self.redo_history.append(last)
+
+            if last['type'] == self.operations_types[0]:
+                self.color_conversion_applied = False
+            self.img_edit = self.history[-1]['image'].copy()
+            self.photo_edit = ImageTk.PhotoImage(self.img_edit)
             self.update_canvas()
+            self.update_history_listbox()
+
+    def redo_preprocessing(self):
+        if self.redo_history:
+            self.history.append(self.redo_history.pop())
+            self.img_edit = self.history[-1]['image'].copy()
+            self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+            self.update_canvas()
+            self.update_history_listbox()
 
     def start_app(self):
         self.app.mainloop()
