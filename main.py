@@ -24,6 +24,8 @@ class Main:
         self.img_edit = None
         self.photo_edit = None
 
+        self.history = []
+
         # Janela de espaço de cores
         self.color_conversion_window = None
 
@@ -37,6 +39,8 @@ class Main:
             'Lab': cv2.COLOR_RGB2Lab,
             'YCrCb': cv2.COLOR_RGB2YCrCb
         }
+
+        self.color_conversion_applied = False
 
         self.filter_window = None
         self.filter_options = [
@@ -150,7 +154,7 @@ class Main:
                 self.img_original = Image.open(filename).convert("RGB")
                 self.img_edit = self.img_original
                 self.img_ratio = self.img_original.size[0] / self.img_original.size[1]
-
+                self.color_conversion_applied = False
                 photo_img = ImageTk.PhotoImage(self.img_original)
 
                 width, height = self.canvas_original.winfo_width(), self.canvas_original.winfo_height()
@@ -224,6 +228,12 @@ class Main:
             ).pack()
 
     def color_conversion(self, selected_color):
+        if self.color_conversion_applied:
+            CTkMessagebox(
+                title="Erro", message="Conversão já aplicada", icon="cancel"
+            )
+            return
+
         cv_img = np.array(self.img_edit)
         if selected_color == 'RGB':
             self.photo_edit = self.photo_img
@@ -232,11 +242,10 @@ class Main:
             self.img_edit = Image.fromarray(cvt_img)
             self.photo_edit = ImageTk.PhotoImage(self.img_edit)
 
-        width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
+        self.update_canvas()
 
-        self.canvas_edited.create_image(
-            int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
-        )
+        self.color_conversion_applied = True
+        self.history.append(self.img_edit.copy())
 
     def open_filter_window(self):
         if not (self.filter_window is None or not self.filter_window.winfo_exists()):
@@ -420,6 +429,13 @@ class Main:
     def handle_sobel_ksize_slider(self, value):
         self.label_sobel_ksize.configure(text=f'{int(value)}')
         self.sobel_ksize = int(value)
+
+    def update_canvas(self):
+        width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
+
+        self.canvas_edited.create_image(
+            int(width / 2), int(height / 2), anchor='center', image=self.photo_edit
+        )
 
     def start_app(self):
         self.app.mainloop()
