@@ -71,10 +71,15 @@ class Main:
         self.sobel_ksize = None
         self.label_sobel_ksize = None
 
+        self.laplace_window = None
+        self.laplace_ksize = None
+        self.label_laplace_ksize = None
+
         self.processing_options = [
             "Conversão de cores",
             "Filtros",
-            "Sobel"
+            "Sobel",
+            "Laplace"
         ]
 
         # Canvas para as imagens
@@ -242,7 +247,9 @@ class Main:
                 self.open_filter_window()
             elif selected_method == "Sobel":
                 self.open_sobel_window()
-
+            elif selected_method == "Laplace":
+                self.open_laplace_window()
+                
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
             self.color_conversion_window = ctk.CTkToplevel(self.app)
@@ -464,6 +471,51 @@ class Main:
         self.redo_history.clear()
         self.update_history_listbox()
 
+    def open_laplace_window(self):
+        if not (self.laplace_window is None or not self.laplace_window.winfo_exists()):
+            return
+        self.laplace_window = ctk.CTkToplevel(self.app)
+        self.laplace_window.geometry("300x720")
+        self.laplace_window.title("Sobel")
+
+        k_min = 1
+        k_max = 15
+        steps = int((k_max - k_min) / 2)
+
+        ctk.CTkLabel(self.laplace_window, text="Tamanho do Kernel", font=("Roboto", -18)).pack()
+
+        self.label_laplace_ksize = ctk.CTkLabel(self.laplace_window, text="1")
+        self.label_laplace_ksize.pack()
+
+        self.slider_kernel_size = ctk.CTkSlider(
+            self.laplace_window, from_=k_min, to=k_max, number_of_steps=steps, command=self.handle_laplace_ksize_slider
+        )
+        self.slider_kernel_size.pack()
+        self.slider_kernel_size.set(1)
+
+        ctk.CTkLabel(self.laplace_window, text="Direção", font=("Roboto", -18)).pack()
+
+        ctk.CTkButton(
+            self.laplace_window, text="Confirmar", command=self.apply_laplace
+        ).pack()
+
+    def apply_laplace(self):
+        cv_img = np.array(self.img_edit)
+
+        edit_img = cv2.Laplacian(cv_img, cv2.CV_16S, ksize=self.laplace_ksize)
+
+        self.img_edit = Image.fromarray(edit_img)
+        self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        self.update_canvas()
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': 'Laplace',
+            'type': self.operations_types[2]
+        })
+        self.redo_history.clear()
+        self.update_history_listbox()
+
     def handle_kernel_slider(self, value):
         self.label_kernel_size.configure(text=f"{int(value)}")
         self.kernel_size = (int(value), int(value))
@@ -483,6 +535,10 @@ class Main:
     def handle_sobel_ksize_slider(self, value):
         self.label_sobel_ksize.configure(text=f'{int(value)}')
         self.sobel_ksize = int(value)
+
+    def handle_laplace_ksize_slider(self, value):
+        self.label_laplace_ksize.configure(text=f'{int(value)}')
+        self.laplace_ksize = int(value)
 
     def update_canvas(self):
         width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
