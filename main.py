@@ -218,7 +218,7 @@ class Main:
     def btn_save_img_callback(self):
         if self.img_edit is not None:
             img = self.img_edit
-            filename = ctk.filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("JPEG files", "*.jpg")])
+            filename = ctk.filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("PNG files", "*.png"), ("JPEG files", "*.jpg")])
 
             if filename:
                 try:
@@ -448,9 +448,9 @@ class Main:
         cv_img = np.array(self.img_edit)
 
         if direction == "x":
-            edit_img = cv2.Sobel(cv_img, cv2.CV_64F, 1, 0, self.sobel_ksize)
+            edit_img = cv2.Sobel(cv_img, cv2.CV_8U, 1, 0, self.sobel_ksize)
         else:
-            edit_img = cv2.Sobel(cv_img, cv2.CV_64F, 0, 1, self.sobel_ksize)
+            edit_img = cv2.Sobel(cv_img, cv2.CV_8U, 0, 1, self.sobel_ksize)
 
         self.img_edit = Image.fromarray(edit_img)
         self.photo_edit = ImageTk.PhotoImage(self.img_edit)
