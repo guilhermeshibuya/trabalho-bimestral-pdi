@@ -75,11 +75,23 @@ class Main:
         self.laplace_ksize = None
         self.label_laplace_ksize = None
 
+        self.threshold_window = None
+        self.threshold_value = None
+        self.label_threshold_value = None
+        self.slider_threshold_value = None
+        self.threshold_options = {
+            "Binário": cv2.THRESH_BINARY,
+            "Binário Invertido": cv2.THRESH_BINARY_INV,
+            "Truncated": cv2.THRESH_TRUNC,
+            "Otsu": cv2.THRESH_OTSU
+        }
+
         self.processing_options = [
             "Conversão de cores",
             "Filtros",
             "Sobel",
-            "Laplace"
+            "Laplace",
+            "Threshold"
         ]
 
         # Canvas para as imagens
@@ -163,7 +175,7 @@ class Main:
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
 
-        self.operations_types = ["color conversion", "filter", "edge detection"]
+        self.operations_types = ["color conversion", "filter", "edge detection", "thresholding"]
 
         self.app.update()
 
@@ -249,7 +261,9 @@ class Main:
                 self.open_sobel_window()
             elif selected_method == "Laplace":
                 self.open_laplace_window()
-                
+            elif selected_method == "Threshold":
+                self.open_threshold_window()
+
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
             self.color_conversion_window = ctk.CTkToplevel(self.app)
@@ -476,7 +490,7 @@ class Main:
             return
         self.laplace_window = ctk.CTkToplevel(self.app)
         self.laplace_window.geometry("300x720")
-        self.laplace_window.title("Sobel")
+        self.laplace_window.title("Laplace")
 
         k_min = 1
         k_max = 15
@@ -492,8 +506,6 @@ class Main:
         )
         self.slider_kernel_size.pack()
         self.slider_kernel_size.set(1)
-
-        ctk.CTkLabel(self.laplace_window, text="Direção", font=("Roboto", -18)).pack()
 
         ctk.CTkButton(
             self.laplace_window, text="Confirmar", command=self.apply_laplace
@@ -512,6 +524,59 @@ class Main:
             'image': self.img_edit.copy(),
             'operation': 'Laplace',
             'type': self.operations_types[2]
+        })
+        self.redo_history.clear()
+        self.update_history_listbox()
+
+    def open_threshold_window(self):
+        if not (self.threshold_window is None or not self.threshold_window.winfo_exists()):
+            return
+        self.threshold_window = ctk.CTkToplevel(self.app)
+        self.threshold_window.geometry("300x720")
+        self.threshold_window.title("Threshold")
+
+        ctk.CTkLabel(self.threshold_window, text="Valor do Threshold", font=("Roboto", -18)).pack()
+
+        self.label_threshold_value = ctk.CTkLabel(self.threshold_window, text="0")
+        self.label_threshold_value.pack()
+
+        self.slider_threshold_value = ctk.CTkSlider(
+            self.threshold_window, from_=0, to=255, command=self.handle_threshold_slider
+        )
+        self.slider_threshold_value.pack()
+        self.slider_threshold_value.set(0)
+
+        threshold_type_var = ctk.StringVar(self.laplace_window)
+        threshold_type_var.set("Binário")
+
+        for index, option in enumerate(self.threshold_options):
+            if index == 0:
+                pady = (20, 10)
+            elif index == len(self.threshold_options) - 1:
+                pady = (10, 20)
+            else:
+                pady = (10, 10)
+            ctk.CTkRadioButton(
+                self.threshold_window, text=option, variable=threshold_type_var, value=option
+            ).pack(pady=pady)
+
+        ctk.CTkButton(
+            self.threshold_window, text="Confirmar", command=lambda: self.apply_threshold(threshold_type_var.get())
+        ).pack()
+
+    def apply_threshold(self, threshold_type):
+        cv_img = np.array(self.img_edit)
+
+        _, edit_img = cv2.threshold(cv_img, self.threshold_value, 255, self.threshold_options[threshold_type])
+
+        self.img_edit = Image.fromarray(edit_img)
+        self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        self.update_canvas()
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': f'Threshold {threshold_type}',
+            'type': self.operations_types[3]
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -539,6 +604,10 @@ class Main:
     def handle_laplace_ksize_slider(self, value):
         self.label_laplace_ksize.configure(text=f'{int(value)}')
         self.laplace_ksize = int(value)
+
+    def handle_threshold_slider(self, value):
+        self.label_threshold_value.configure(text=f'{int(value)}')
+        self.threshold_value = int(value)
 
     def update_canvas(self):
         width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
