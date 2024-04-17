@@ -349,7 +349,7 @@ class Main:
         self.slider_d_size.pack()
         self.slider_d_size.set(0)
 
-        ctk.CTkLabel(self.filter_window, text="Sigma Color",  font=("Roboto", -18)).pack()
+        ctk.CTkLabel(self.filter_window, text="Sigma Color (bilateral)",  font=("Roboto", -18)).pack()
 
         self.label_sigma_color = ctk.CTkLabel(self.filter_window, text="0")
         self.label_sigma_color.pack()
@@ -360,7 +360,7 @@ class Main:
         self.slider_sigma_color.pack()
         self.slider_sigma_color.set(0)
 
-        ctk.CTkLabel(self.filter_window, text="Sigma Space", font=("Roboto", -18)).pack()
+        ctk.CTkLabel(self.filter_window, text="Sigma Space (bilateral)", font=("Roboto", -18)).pack()
 
         self.label_sigma_space = ctk.CTkLabel(self.filter_window, text="0")
         self.label_sigma_space.pack()
