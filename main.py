@@ -2,6 +2,7 @@ import customtkinter as ctk
 import numpy as np
 from PIL import Image, ImageTk
 from CTkListbox import *
+from CTkToolTip import *
 from CTkMessagebox import CTkMessagebox
 import cv2
 
@@ -139,6 +140,9 @@ class Main:
             command=self.btn_load_img_callback, width=40, height=40
         )
         self.btn_load_img.grid(row=0, column=0, padx=10, pady=(10, 5))
+        self.tooltip_load_img_btn = CTkToolTip(
+            self.btn_load_img, message="Carregar imagem", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
+        )
 
         self.btn_save_img_icon = ctk.CTkImage(
             dark_image=Image.open('icons/file_save.png'),
@@ -149,6 +153,9 @@ class Main:
             command=self.btn_save_img_callback, width=40, height=40
         )
         self.btn_save_img.grid(row=1, column=0, padx=10, pady=5)
+        self.tooltip_save_img_btn = CTkToolTip(
+            self.btn_save_img, message="Salvar imagem", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
+        )
 
         self.btn_undo_icon = ctk.CTkImage(
             dark_image=Image.open('icons/undo.png'),
@@ -159,6 +166,9 @@ class Main:
             command=self.undo_preprocessing, width=40, height=40
         )
         self.btn_undo.grid(row=2, column=0, padx=10, pady=5)
+        self.tooltip_undo_btn = CTkToolTip(
+            self.btn_undo, message="Desfazer", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
+        )
 
         self.btn_redo_icon = ctk.CTkImage(
             dark_image=Image.open('icons/redo.png'),
@@ -169,6 +179,9 @@ class Main:
             command=self.redo_preprocessing, width=40, height=40
         )
         self.btn_redo.grid(row=3, column=0, padx=10, pady=5)
+        self.tooltip_redo_btn = CTkToolTip(
+            self.btn_redo, message="Refazer", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
+        )
 
         # Listbox
         self.listbox = CTkListbox(self.frame_options)
