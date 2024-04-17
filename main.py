@@ -47,7 +47,6 @@ class Main:
 
         self.filter_window = None
         self.filter_options = [
-            "Nenhum",
             "Média",
             "Gaussiano",
             "Bilateral"
@@ -200,7 +199,8 @@ class Main:
         ctk.set_default_color_theme("dark-blue")
 
         self.operations_types = ["color conversion", "filter", "edge detection", "thresholding", "morphology"]
-
+        self.app.bind("<Control-z>", lambda event: self.undo_preprocessing())
+        self.app.bind("<Control-y>", lambda event: self.redo_preprocessing())
         self.app.update()
 
     def fill_img(self, event):
@@ -398,7 +398,7 @@ class Main:
         self.slider_sigma_space.set(0)
 
         filter_var = ctk.StringVar(self.filter_window)
-        filter_var.set("Nenhum")
+        filter_var.set("Média")
 
         for index, filter in enumerate(self.filter_options):
             if index == 0:
@@ -418,25 +418,8 @@ class Main:
     def apply_filter(self, filter_name):
         cv_img = np.array(self.img_edit)
         if filter_name == self.filter_options[0]:
-            filtered_img = np.array(self.img_original)
-            self.sigma_color = 0
-            self.slider_sigma_color.set(0)
-            self.label_sigma_color.configure(text=self.sigma_color)
-
-            self.sigma_space = 0
-            self.slider_sigma_space.set(0)
-            self.label_sigma_space.configure(text=self.sigma_space)
-
-            self.d_size = 0
-            self.slider_d_size.set(0)
-            self.label_d_size.configure(text=self.d_size)
-
-            self.kernel_size = (0, 0)
-            self.slider_kernel_size.set(0)
-            self.label_kernel_size.configure(text="0")
-        elif filter_name == self.filter_options[1]:
             filtered_img = cv2.blur(cv_img, self.kernel_size)
-        elif filter_name == self.filter_options[2]:
+        elif filter_name == self.filter_options[1]:
             filtered_img = cv2.GaussianBlur(cv_img, self.kernel_size, 0)
         else:
             filtered_img = cv2.bilateralFilter(cv_img, self.d_size, self.sigma_color, self.sigma_space)
