@@ -86,12 +86,23 @@ class Main:
             "Otsu": cv2.THRESH_OTSU
         }
 
+        self.morphology_window = None
+        self.morphology_iterations = None
+        self.label_morphology_iterations = None
+        self.morphology_ksize = None
+        self.label_morphology_ksize = None
+        self.morphology_options = {
+            "Erosão": cv2.erode,
+            "Dilatação": cv2.dilate
+        }
+
         self.processing_options = [
             "Conversão de cores",
             "Filtros",
             "Sobel",
             "Laplace",
-            "Threshold"
+            "Threshold",
+            "Morfologia"
         ]
 
         # Canvas para as imagens
@@ -175,7 +186,7 @@ class Main:
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
 
-        self.operations_types = ["color conversion", "filter", "edge detection", "thresholding"]
+        self.operations_types = ["color conversion", "filter", "edge detection", "thresholding", "morphology"]
 
         self.app.update()
 
@@ -263,6 +274,8 @@ class Main:
                 self.open_laplace_window()
             elif selected_method == "Threshold":
                 self.open_threshold_window()
+            else:
+                self.open_morphology_window()
 
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
@@ -546,7 +559,7 @@ class Main:
         self.slider_threshold_value.pack()
         self.slider_threshold_value.set(0)
 
-        threshold_type_var = ctk.StringVar(self.laplace_window)
+        threshold_type_var = ctk.StringVar(self.threshold_window)
         threshold_type_var.set("Binário")
 
         for index, option in enumerate(self.threshold_options):
@@ -587,6 +600,69 @@ class Main:
         self.redo_history.clear()
         self.update_history_listbox()
 
+    def open_morphology_window(self):
+        if not (self.morphology_window is None or not self.morphology_window.winfo_exists()):
+            return
+        self.morphology_window = ctk.CTkToplevel(self.app)
+        self.morphology_window.geometry("300x720")
+        self.morphology_window.title("Morfologia")
+
+        ctk.CTkLabel(self.morphology_window, text="Tamanho do Kernel", font=("Roboto", -18)).pack()
+        self.label_morphology_ksize = ctk.CTkLabel(self.morphology_window, text="1")
+        self.label_morphology_ksize.pack()
+
+        self.slider_kernel_size = ctk.CTkSlider(
+            self.morphology_window, from_=1, to=15, number_of_steps=7, command=self.handle_morphology_ksize_slider
+        )
+        self.slider_kernel_size.pack()
+        self.slider_kernel_size.set(1)
+
+        ctk.CTkLabel(self.morphology_window, text="Número de iterações", font=("Roboto", -18)).pack()
+        self.label_morphology_iterations = ctk.CTkLabel(self.morphology_window, text="1")
+        self.label_morphology_iterations.pack()
+
+        self.slider_kernel_size = ctk.CTkSlider(
+            self.morphology_window, from_=1, to=20, command=self.handle_morphology_iterations_slider
+        )
+        self.slider_kernel_size.pack()
+        self.slider_kernel_size.set(1)
+
+        morphology_option_var = ctk.StringVar(self.morphology_window)
+        morphology_option_var.set("Erosão")
+
+        for index, option in enumerate(self.morphology_options):
+            if index == 0:
+                pady = (20, 10)
+            elif index == len(self.threshold_options) - 1:
+                pady = (10, 20)
+            else:
+                pady = (10, 10)
+            ctk.CTkRadioButton(
+                self.morphology_window, text=option, variable=morphology_option_var, value=option
+            ).pack(pady=pady)
+
+        ctk.CTkButton(
+            self.morphology_window, text="Confirmar", command=lambda: self.apply_morphology(morphology_option_var.get())
+        ).pack()
+
+    def apply_morphology(self, option):
+        cv_img = np.array(self.img_edit)
+
+        morphy_func = self.morphology_options[option]
+        edit_img = morphy_func(cv_img, self.morphology_ksize, iterations=self.morphology_iterations)
+
+        self.img_edit = Image.fromarray(edit_img)
+        self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        self.update_canvas()
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': f'Morfologia matemática - {option}',
+            'type': self.operations_types[4]
+        })
+        self.redo_history.clear()
+        self.update_history_listbox()
+
     def handle_kernel_slider(self, value):
         self.label_kernel_size.configure(text=f"{int(value)}")
         self.kernel_size = (int(value), int(value))
@@ -614,6 +690,14 @@ class Main:
     def handle_threshold_slider(self, value):
         self.label_threshold_value.configure(text=f'{int(value)}')
         self.threshold_value = int(value)
+
+    def handle_morphology_ksize_slider(self, value):
+        self.label_morphology_ksize.configure(text=f'{int(value)}')
+        self.morphology_ksize = np.ones((int(value), int(value)))
+
+    def handle_morphology_iterations_slider(self, value):
+        self.label_morphology_iterations.configure(text=f'{int(value)}')
+        self.morphology_iterations = int(value)
 
     def update_canvas(self):
         width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
