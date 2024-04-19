@@ -6,6 +6,7 @@ from CTkToolTip import *
 from CTkMessagebox import CTkMessagebox
 import cv2
 
+
 class Main:
     def __init__(self):
         self.app = ctk.CTk()
@@ -42,7 +43,7 @@ class Main:
             'Lab': cv2.COLOR_RGB2Lab,
             'YCrCb': cv2.COLOR_RGB2YCrCb
         }
-
+        # Saber se foi aplicado conversao de cor
         self.color_conversion_applied = False
 
         self.filter_window = None
@@ -246,6 +247,9 @@ class Main:
                     int(width / 2), int(height / 2), anchor='center', image=photo_img
                 )
                 self.photo_edit = photo_img
+
+                self.history.clear()
+                self.color_conversion_applied = False
                 self.history.append({
                     'image': self.img_edit.copy(),
                     'operation': 'Imagem aberta'
