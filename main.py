@@ -97,13 +97,22 @@ class Main:
             "Dilatação": cv2.dilate
         }
 
+        self.canny_window = None
+        self.label_canny_t_lower = None
+        self.label_canny_t_upper = None
+        self.canny_t_lower = None
+        self.canny_t_upper = None
+        self.slider_canny_t_lower = None
+        self.slider_canny_t_upper = None
+
         self.processing_options = [
             "Conversão de cores",
             "Filtros",
             "Sobel",
             "Laplace",
             "Threshold",
-            "Morfologia"
+            "Morfologia",
+            "Canny"
         ]
 
         # Canvas para as imagens
@@ -291,8 +300,10 @@ class Main:
                 self.open_laplace_window()
             elif selected_method == "Threshold":
                 self.open_threshold_window()
-            else:
+            elif selected_method == "Morfologia":
                 self.open_morphology_window()
+            else:
+                self.open_canny_window()
 
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
@@ -663,6 +674,49 @@ class Main:
         self.redo_history.clear()
         self.update_history_listbox()
 
+    def open_canny_window(self):
+        if not (self.canny_window is None or not self.canny_window.winfo_exists()):
+            return
+        self.canny_window = ctk.CTkToplevel(self.app)
+        self.canny_window.geometry("300x720")
+        self.canny_window.title("Canny")
+
+        ctk.CTkLabel(self.canny_window, text="Limiar Inferior", font=("Roboto", -18)).pack()
+        self.label_canny_t_lower = ctk.CTkLabel(self.canny_window, text="0")
+        self.label_canny_t_lower.pack()
+        self.slider_canny_t_lower = ctk.CTkSlider(
+            self.canny_window, from_=0, to=255, command=self.handle_canny_lower_slider
+        )
+        self.slider_canny_t_lower.pack()
+        self.slider_canny_t_lower.set(0)
+
+        ctk.CTkLabel(self.canny_window, text="Limiar Superior", font=("Roboto", -18)).pack()
+        self.label_canny_t_upper = ctk.CTkLabel(self.canny_window, text="255")
+        self.label_canny_t_upper.pack()
+        self.slider_canny_t_upper = ctk.CTkSlider(
+            self.canny_window, from_=0, to=255, command=self.handle_canny_upper_slider
+        )
+        self.slider_canny_t_upper.pack()
+        self.slider_canny_t_upper.set(255)
+
+        ctk.CTkButton(self.canny_window, text="Confirmar", command=self.apply_canny).pack()
+
+    def apply_canny(self):
+        cv_img = np.array(self.img_edit)
+        edit_img = cv2.Canny(cv_img, self.canny_t_lower, self.canny_t_upper)
+
+        self.img_edit = Image.fromarray(edit_img)
+        self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        self.update_canvas()
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': 'Canny',
+            'type': self.operations_types[2]
+        })
+        self.redo_history.clear()
+        self.update_history_listbox()
+
     def handle_kernel_slider(self, value):
         self.label_kernel_size.configure(text=f"{int(value)}")
         self.kernel_size = (int(value), int(value))
@@ -698,6 +752,14 @@ class Main:
     def handle_morphology_iterations_slider(self, value):
         self.label_morphology_iterations.configure(text=f'{int(value)}')
         self.morphology_iterations = int(value)
+
+    def handle_canny_lower_slider(self, value):
+        self.label_canny_t_lower.configure(text=f'{int(value)}')
+        self.canny_t_lower = int(value)
+
+    def handle_canny_upper_slider(self, value):
+        self.label_canny_t_upper.configure(text=f'{int(value)}')
+        self.canny_t_upper = int(value)
 
     def update_canvas(self):
         width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
