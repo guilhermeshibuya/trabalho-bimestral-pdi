@@ -580,7 +580,7 @@ class Main:
     def apply_threshold(self, threshold_type):
         cv_img = np.array(self.img_edit)
 
-        if len(cv_img.shape) > 2:
+        if len(cv_img.shape) > 2 and threshold_type == "Otsu":
             CTkMessagebox(
                 title="Aviso", message="Para utilizar o Otsu, a imagem precisar estar em escala de cinza", icon="info"
             )
