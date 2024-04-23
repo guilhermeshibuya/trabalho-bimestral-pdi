@@ -105,6 +105,14 @@ class Main:
         self.slider_canny_t_lower = None
         self.slider_canny_t_upper = None
 
+        self.contrast_window = None
+        self.label_alpha = None
+        self.alpha = None
+        self.slider_alpha = None
+        self.label_beta = None
+        self.beta = None
+        self.slider_beta = None
+
         self.processing_options = [
             "Conversão de cores",
             "Filtros",
@@ -112,7 +120,8 @@ class Main:
             "Laplace",
             "Threshold",
             "Morfologia",
-            "Canny"
+            "Canny",
+            "Contraste e Brilho"
         ]
 
         # Canvas para as imagens
@@ -208,7 +217,14 @@ class Main:
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
 
-        self.operations_types = ["color conversion", "filter", "edge detection", "thresholding", "morphology"]
+        self.operations_types = [
+            "color conversion",
+            "filter",
+            "edge detection",
+            "thresholding",
+            "morphology",
+            "contrast and brightness"
+        ]
         self.app.bind("<Control-z>", lambda event: self.undo_preprocessing())
         self.app.bind("<Control-y>", lambda event: self.redo_preprocessing())
         self.app.update()
@@ -302,8 +318,10 @@ class Main:
                 self.open_threshold_window()
             elif selected_method == "Morfologia":
                 self.open_morphology_window()
-            else:
+            elif selected_method == "Canny":
                 self.open_canny_window()
+            else:
+                self.open_contrast_window()
 
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
@@ -716,6 +734,57 @@ class Main:
         })
         self.redo_history.clear()
         self.update_history_listbox()
+
+    def open_contrast_window(self):
+        if not (self.contrast_window is None or not self.contrast_window.winfo_exists()):
+            return
+        self.contrast_window = ctk.CTkToplevel(self.app)
+        self.contrast_window.geometry("300x720")
+        self.contrast_window.title("Contraste e Brilho")
+
+        ctk.CTkLabel(self.contrast_window, text="Contraste", font=("Roboto", -18)).pack()
+        self.label_alpha = ctk.CTkLabel(self.contrast_window, text="1.0")
+        self.label_alpha.pack()
+        self.slider_alpha = ctk.CTkSlider(
+            self.contrast_window, from_=1, to=3, command=self.handle_alpha_slider
+        )
+        self.slider_alpha.pack()
+        self.slider_alpha.set(1.0)
+
+        ctk.CTkLabel(self.contrast_window, text="Brilho", font=("Roboto", -18)).pack()
+        self.label_beta = ctk.CTkLabel(self.contrast_window, text="0")
+        self.label_beta.pack()
+        self.slider_beta = ctk.CTkSlider(
+            self.contrast_window, from_=0, to=100, command=self.handle_beta_slider
+        )
+        self.slider_beta.pack()
+        self.slider_beta.set(0)
+
+        ctk.CTkButton(self.contrast_window, text="Confirmar", command=self.apply_contrast_and_brightness).pack()
+
+    def apply_contrast_and_brightness(self):
+        cv_img = np.array(self.img_edit)
+        edit_img = cv2.convertScaleAbs(cv_img, alpha=self.alpha, beta=self.beta)
+
+        self.img_edit = Image.fromarray(edit_img)
+        self.photo_edit = ImageTk.PhotoImage(self.img_edit)
+
+        self.update_canvas()
+        self.history.append({
+            'image': self.img_edit.copy(),
+            'operation': 'Contraste / Brilho',
+            'type': self.operations_types[5]
+        })
+        self.redo_history.clear()
+        self.update_history_listbox()
+
+    def handle_alpha_slider(self, value):
+        self.label_alpha.configure(text=f"{value}")
+        self.alpha = value
+
+    def handle_beta_slider(self, value):
+        self.label_beta.configure(text=f"{int(value)}")
+        self.beta = int(value)
 
     def handle_kernel_slider(self, value):
         self.label_kernel_size.configure(text=f"{int(value)}")
