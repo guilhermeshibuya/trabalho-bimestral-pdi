@@ -90,6 +90,10 @@ class Main:
         self.threshold_value = None
         self.label_threshold_value = None
         self.slider_threshold_value = None
+
+        self.threshold_value_max = None
+        self.label_threshold_value_max = None
+        self.slider_threshold_value_max = None
         self.threshold_options = {
             "Binário": cv2.THRESH_BINARY,
             "Binário Invertido": cv2.THRESH_BINARY_INV,
@@ -387,7 +391,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': f'Espaço de cor - {selected_color}',
-            'type': self.operations_types[0]
+            'type': self.operations_types[0],
+            'params': f'color: {selected_color}'
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -469,10 +474,13 @@ class Main:
         cv_img = np.array(self.img_edit)
         if filter_name == self.filter_options[0]:
             filtered_img = cv2.blur(cv_img, self.kernel_size)
+            params = f'kernel_size: {self.kernel_size}'
         elif filter_name == self.filter_options[1]:
             filtered_img = cv2.GaussianBlur(cv_img, self.kernel_size, 0)
+            params = f'kernel_size: {self.kernel_size}, sigma_x: 0'
         else:
             filtered_img = cv2.bilateralFilter(cv_img, self.d_size, self.sigma_color, self.sigma_space)
+            params = f'd_size: {self.d_size}, sigma_color: {self.sigma_color}, sigma_space: {self.sigma_space}'
 
         self.img_edit = Image.fromarray(filtered_img)
         self.photo_edit = ImageTk.PhotoImage(self.img_edit)
@@ -481,7 +489,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': filter_name,
-            'type': self.operations_types[1]
+            'type': self.operations_types[1],
+            'params': params
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -529,8 +538,10 @@ class Main:
 
         if direction == "x":
             edit_img = cv2.Sobel(cv_img, cv2.CV_8U, 1, 0, self.sobel_ksize)
+            params = f'ddepth: CV_8U, dx: 1, dy: 0, k_size: {self.sobel_ksize}'
         else:
             edit_img = cv2.Sobel(cv_img, cv2.CV_8U, 0, 1, self.sobel_ksize)
+            params = f'ddepth: CV_8U, dx: 0, dy: 1, k_size: {self.sobel_ksize}'
 
         self.img_edit = Image.fromarray(edit_img)
         self.photo_edit = ImageTk.PhotoImage(self.img_edit)
@@ -539,7 +550,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': 'Sobel',
-            'type': self.operations_types[2]
+            'type': self.operations_types[2],
+            'params': params
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -582,7 +594,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': 'Laplace',
-            'type': self.operations_types[2]
+            'type': self.operations_types[2],
+            'params': f'ddepth: CV_16S, k_size: {self.laplace_ksize}'
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -594,7 +607,7 @@ class Main:
         self.threshold_window.geometry("300x720")
         self.threshold_window.title("Threshold")
 
-        ctk.CTkLabel(self.threshold_window, text="Valor do Threshold", font=("Roboto", -18)).pack()
+        ctk.CTkLabel(self.threshold_window, text="Valor mínimo do Threshold", font=("Roboto", -18)).pack()
 
         self.label_threshold_value = ctk.CTkLabel(self.threshold_window, text="0")
         self.label_threshold_value.pack()
@@ -604,6 +617,15 @@ class Main:
         )
         self.slider_threshold_value.pack()
         self.slider_threshold_value.set(0)
+
+        ctk.CTkLabel(self.threshold_window, text="Valor máximo do Threshold", font=("Roboto", -18)).pack()
+        self.label_threshold_value_max = ctk.CTkLabel(self.threshold_window, text="255")
+        self.label_threshold_value_max.pack()
+        self.slider_threshold_value_max = ctk.CTkSlider(
+            self.threshold_window, from_=0, to=255, command=self.handle_threshold_max_slider
+        )
+        self.slider_threshold_value_max.pack()
+        self.slider_threshold_value_max.set(255)
 
         threshold_type_var = ctk.StringVar(self.threshold_window)
         threshold_type_var.set("Binário")
@@ -632,7 +654,7 @@ class Main:
             )
             return
 
-        _, edit_img = cv2.threshold(cv_img, self.threshold_value, 255, self.threshold_options[threshold_type])
+        _, edit_img = cv2.threshold(cv_img, self.threshold_value, self.threshold_value_max, self.threshold_options[threshold_type])
 
         self.img_edit = Image.fromarray(edit_img)
         self.photo_edit = ImageTk.PhotoImage(self.img_edit)
@@ -641,7 +663,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': f'Threshold {threshold_type}',
-            'type': self.operations_types[3]
+            'type': self.operations_types[3],
+            'params': f'min: {self.threshold_value}, max: {self.threshold_value_max}'
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -704,7 +727,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': f'Morfologia matemática - {option}',
-            'type': self.operations_types[4]
+            'type': self.operations_types[4],
+            'params': f'k_size: {self.morphology_ksize}, iterations: {self.morphology_iterations}'
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -747,7 +771,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': 'Canny',
-            'type': self.operations_types[2]
+            'type': self.operations_types[2],
+            'params': f'lower_threshold: {self.canny_t_lower}, upper_threshold: {self.canny_t_upper}'
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -790,7 +815,8 @@ class Main:
         self.history.append({
             'image': self.img_edit.copy(),
             'operation': 'Contraste / Brilho',
-            'type': self.operations_types[5]
+            'type': self.operations_types[5],
+            'params': f'alpha: {self.alpha}, beta: {self.beta}'
         })
         self.redo_history.clear()
         self.update_history_listbox()
@@ -830,6 +856,10 @@ class Main:
     def handle_threshold_slider(self, value):
         self.label_threshold_value.configure(text=f'{int(value)}')
         self.threshold_value = int(value)
+
+    def handle_threshold_max_slider(self, value):
+        self.label_threshold_value_max.configure(text=f'{int(value)}')
+        self.threshold_value_max = int(value)
 
     def handle_morphology_ksize_slider(self, value):
         self.label_morphology_ksize.configure(text=f'{int(value)}')
