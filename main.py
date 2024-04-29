@@ -330,6 +330,7 @@ class Main:
                         title="Erro", message="Erro ao salvar imagem!", icon="cancel"
                     )
 
+    # Função callback para quando um item da listbox é selecionado
     def on_listbox_select(self, event):
         selected_index = self.listbox.curselection()
         selected_method = self.processing_options[selected_index]
@@ -352,6 +353,7 @@ class Main:
             else:
                 self.open_contrast_window()
 
+    # Abre a janela de conversao de cores e define suas configurações
     def open_color_conversion(self):
         if self.color_conversion_window is None or not self.color_conversion_window.winfo_exists():
             self.color_conversion_window = ctk.CTkToplevel(self.app)
@@ -378,7 +380,9 @@ class Main:
                 self.color_conversion_window, text="Confirmar", command=lambda: self.color_conversion(color_space_var.get())
             ).pack()
 
+    # Aplica a conversao de cor baseado na opcao selecionada
     def color_conversion(self, selected_color):
+        # Só é possivel aplicar uma vez, caso queira trocar e necessario utilizar o "desfazer"ou "ctrl + z"
         if self.color_conversion_applied:
             CTkMessagebox(
                 title="Erro", message="Conversão já aplicada", icon="cancel"
@@ -525,17 +529,17 @@ class Main:
         self.slider_kernel_size.pack()
         self.slider_kernel_size.set(1)
 
-        ctk.CTkLabel(self.sobel_window, text="Direção", font=("Roboto", -18)).pack()
+        ctk.CTkLabel(self.sobel_window, text="Direção", font=("Roboto", -18)).pack(pady=(0, 10))
 
         direction_var = ctk.StringVar(self.sobel_window)
         direction_var.set("x")
 
         ctk.CTkRadioButton(
             self.sobel_window, text="x", variable=direction_var, value="x"
-        ).pack()
+        ).pack(pady=(0, 10))
         ctk.CTkRadioButton(
             self.sobel_window, text="y", variable=direction_var, value="y"
-        ).pack()
+        ).pack(pady=(0, 10))
 
         ctk.CTkButton(
             self.sobel_window, text="Confirmar", command=lambda: self.apply_sobel(direction_var.get())
@@ -583,7 +587,7 @@ class Main:
         self.slider_kernel_size = ctk.CTkSlider(
             self.laplace_window, from_=k_min, to=k_max, number_of_steps=steps, command=self.handle_laplace_ksize_slider
         )
-        self.slider_kernel_size.pack()
+        self.slider_kernel_size.pack(pady=(0, 10))
         self.slider_kernel_size.set(1)
 
         ctk.CTkButton(
@@ -763,7 +767,7 @@ class Main:
         self.slider_canny_t_upper = ctk.CTkSlider(
             self.canny_window, from_=0, to=255, command=self.handle_canny_upper_slider
         )
-        self.slider_canny_t_upper.pack()
+        self.slider_canny_t_upper.pack(pady=(0, 10))
         self.slider_canny_t_upper.set(255)
 
         ctk.CTkButton(self.canny_window, text="Confirmar", command=self.apply_canny).pack()
@@ -807,7 +811,7 @@ class Main:
         self.slider_beta = ctk.CTkSlider(
             self.contrast_window, from_=0, to=100, command=self.handle_beta_slider
         )
-        self.slider_beta.pack()
+        self.slider_beta.pack(pady=(0, 10))
         self.slider_beta.set(0)
 
         ctk.CTkButton(self.contrast_window, text="Confirmar", command=self.apply_contrast_and_brightness).pack()
