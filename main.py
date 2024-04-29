@@ -13,20 +13,25 @@ class Main:
         self.app.geometry("1280x720")
         self.app.title("PDI")
 
-        # Configuração do grid geral da janela principal
+        # Configuração do grid da janela principal
         self.app.grid_columnconfigure(0, weight=0)
         self.app.grid_columnconfigure((1, 2), weight=5)
         self.app.grid_rowconfigure(0, weight=3)
         self.app.grid_rowconfigure(1, weight=1)
 
+        # PIL Image original
         self.img_original = None
+        # PhotoImage, apenas para exibição no canvas
         self.photo_img = None
 
+        # Proporção da imagem
         self.img_ratio = 0
 
+        # PIL Image editada e PhotoImage para o canvas
         self.img_edit = None
         self.photo_edit = None
 
+        # Histórico de modificações e histórico do "refazer"
         self.history = []
         self.redo_history = []
 
@@ -43,9 +48,11 @@ class Main:
             'Lab': cv2.COLOR_RGB2Lab,
             'YCrCb': cv2.COLOR_RGB2YCrCb
         }
+
         # Saber se foi aplicado conversao de cor
         self.color_conversion_applied = False
 
+        # Seção relacionado aos filtros
         self.filter_window = None
         self.filter_options = [
             "Média",
@@ -68,14 +75,17 @@ class Main:
         self.label_sigma_space = None
         self.slider_sigma_space = None
 
+        # Sobel
         self.sobel_window = None
         self.sobel_ksize = None
         self.label_sobel_ksize = None
 
+        # Laplace
         self.laplace_window = None
         self.laplace_ksize = None
         self.label_laplace_ksize = None
 
+        # Threshold
         self.threshold_window = None
         self.threshold_value = None
         self.label_threshold_value = None
@@ -87,6 +97,7 @@ class Main:
             "Otsu": cv2.THRESH_OTSU
         }
 
+        # Morfologia
         self.morphology_window = None
         self.morphology_iterations = None
         self.label_morphology_iterations = None
@@ -97,6 +108,7 @@ class Main:
             "Dilatação": cv2.dilate
         }
 
+        # Canny
         self.canny_window = None
         self.label_canny_t_lower = None
         self.label_canny_t_upper = None
@@ -105,6 +117,7 @@ class Main:
         self.slider_canny_t_lower = None
         self.slider_canny_t_upper = None
 
+        # Contraste e brilho
         self.contrast_window = None
         self.label_alpha = None
         self.alpha = None
@@ -113,6 +126,7 @@ class Main:
         self.beta = None
         self.slider_beta = None
 
+        # Opções de processamento do aplicativo
         self.processing_options = [
             "Conversão de cores",
             "Filtros",
@@ -144,11 +158,12 @@ class Main:
         self.frame_options.grid_columnconfigure(1, weight=3)
         self.frame_options.grid_rowconfigure(0, weight=1)
 
-        # Botões
+        # Container para os botões
         self.frame_btns = ctk.CTkFrame(self.app)
         self.frame_btns.grid(row=0, column=0, sticky="nsew", padx=(10, 5), pady=(10, 5), rowspan=2)
         self.frame_btns.grid_columnconfigure(0, weight=1)
 
+        # Botao de carregar imagem
         self.load_img_icon = ctk.CTkImage(
             dark_image=Image.open('icons/file_open.png'),
             size=(36, 36)
@@ -162,6 +177,7 @@ class Main:
             self.btn_load_img, message="Carregar imagem", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
         )
 
+        # Botão de salvar imagem
         self.btn_save_img_icon = ctk.CTkImage(
             dark_image=Image.open('icons/file_save.png'),
             size=(36, 36)
@@ -175,6 +191,7 @@ class Main:
             self.btn_save_img, message="Salvar imagem", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
         )
 
+        # Botão de desfazer
         self.btn_undo_icon = ctk.CTkImage(
             dark_image=Image.open('icons/undo.png'),
             size=(36, 36)
@@ -188,6 +205,7 @@ class Main:
             self.btn_undo, message="Desfazer", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
         )
 
+        # Botão de refazer
         self.btn_redo_icon = ctk.CTkImage(
             dark_image=Image.open('icons/redo.png'),
             size=(36, 36)
@@ -201,7 +219,7 @@ class Main:
             self.btn_redo, message="Refazer", bg_color="#fbfbfb", text_color="#111111", corner_radius=6
         )
 
-        # Listbox
+        # Listbox que contem as opções de processamento
         self.listbox = CTkListbox(self.frame_options)
         self.listbox.grid(row=0, column=0,  sticky="nsew", padx=5, pady=5)
         self.listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
@@ -209,7 +227,7 @@ class Main:
         for option in self.processing_options:
             self.listbox.insert("end", option)
 
-        # Listbox histórico
+        # Listbox de histórico de modificações
         self.history_listbox = CTkListbox(self.frame_options)
         self.history_listbox.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
@@ -249,7 +267,6 @@ class Main:
             anchor='center',
             image=resized_photo
         )
-        # self.photo_img = resized_photo
 
     def btn_load_img_callback(self):
         filename = ctk.filedialog.askopenfilename()
