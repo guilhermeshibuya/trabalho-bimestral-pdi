@@ -1,3 +1,5 @@
+import os.path
+
 import customtkinter as ctk
 import numpy as np
 from PIL import Image, ImageTk
@@ -310,6 +312,12 @@ class Main:
         if self.img_edit is not None:
             img = self.img_edit
             filename = ctk.filedialog.asksaveasfilename(defaultextension=".jpg", filetypes=[("PNG files", "*.png"), ("JPEG files", "*.jpg")])
+            txt_filename = os.path.splitext(filename)[0] + ".txt"
+            with open(txt_filename, 'w') as txt_file:
+                for item in self.history:
+                    operation = item.get('operation', '')
+                    params = item.get('params', '')
+                    txt_file.write(f'{operation} -> {params}\n')
 
             if filename:
                 try:
