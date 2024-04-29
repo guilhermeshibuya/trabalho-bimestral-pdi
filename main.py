@@ -833,6 +833,7 @@ class Main:
         self.redo_history.clear()
         self.update_history_listbox()
 
+    # Funções callback dos sliders
     def handle_alpha_slider(self, value):
         self.label_alpha.configure(text=f"{value}")
         self.alpha = value
@@ -889,6 +890,7 @@ class Main:
         self.label_canny_t_upper.configure(text=f'{int(value)}')
         self.canny_t_upper = int(value)
 
+    # Função para atualizar o canvas
     def update_canvas(self):
         width, height = self.canvas_edited.winfo_width(), self.canvas_edited.winfo_height()
 
@@ -901,6 +903,7 @@ class Main:
         for index, item in enumerate(self.history):
             self.history_listbox.insert("end", f"{index + 1} - Processamento: {item['operation']}")
 
+    # Função para desfazer uma ação
     def undo_preprocessing(self):
         if len(self.history) > 1:
             last = self.history.pop()
@@ -913,6 +916,7 @@ class Main:
             self.update_canvas()
             self.update_history_listbox()
 
+    # Função para refazer uma ação
     def redo_preprocessing(self):
         if self.redo_history:
             self.history.append(self.redo_history.pop())
