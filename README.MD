@@ -45,4 +45,4 @@ O seguinte projeto foi desenvolvido como requisito parcial da disciplina de Proc
 
 # Exemplo
 
-![Alt "interface da aplicação e exemplo de uso"](./imgs/ex.png)
+![Alt "interface da aplicação e exemplo de uso"](https://github.com/guilhermeshibuya/trabalho-bimestral-pdi/blob/main/imgs/ex.PNG)
