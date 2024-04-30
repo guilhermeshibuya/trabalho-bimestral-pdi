@@ -17,9 +17,10 @@ O seguinte projeto foi desenvolvido como requisito parcial da disciplina de Proc
 - **Detector de bordas:** foram implementados o Sobel, Laplace e Canny
 - **Limiarização:** pode-se aplicar Threshold binário, binário invertido, truncated e otsu;
 - **Operações morfológicas:** estão disponíveis dois tipos: erosão e diltação;
-- **Contraste e brilho:**: é possível ajustar o contraste e brilho da imagem.
+- **Contraste e brilho:** é possível ajustar o contraste e brilho da imagem.
+
   Além disso, a aplicação conta com um histórico, com todas as modificações feitas. Ao salvar a imagem modificado, no mesmo diretório é salvo um arquivo txt contendo o histórico de modificações e os parâmetros utilzizados.
-  Também conta com a opção de desfazer uma ação ou de refazer uma ação, que podem ser acionadas pelos seus botões ou pelos seus atalhos, CTRL + Z e CTRL + Y, respectivamente.
+  Também conta com a opção de `desfazer` uma ação ou de `refazer` uma ação, que podem ser acionadas pelos seus botões ou pelos seus atalhos, `CTRL + Z` e `CTRL + Y`, respectivamente.
 
 # Como utilizar
 
